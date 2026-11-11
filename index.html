@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>医学例词拼写卡片 · 错题本</title>
+<style>
+  :root {
+    --gold: #c9963f;
+    --gold-light: #e8c88a;
+    --cream: #faf6ee;
+    --ink: #2d2a24;
+    --ok: #2e9e5b;
+    --bad: #d64545;
+    --card-bg: #fffdf8;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+    background: linear-gradient(160deg, #f4ede0 0%, #ece2cd 100%);
+    min-height: 100vh;
+    color: var(--ink);
+    display: flex; flex-direction: column; align-items: center;
+    padding: 14px 12px 40px;
+  }
+  .wrap { width: 100%; max-width: 480px; }
+
+  /* 顶栏 */
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px; min-height: 26px;
+  }
+  .topbar .back {
+    border: none; background: transparent; color: #8a7c60;
+    font-size: 13px; cursor: pointer; padding: 4px 6px 4px 0;
+  }
+  .topbar .title { font-size: 15px; font-weight: 600; letter-spacing: .5px; }
+  .topbar .spacer { width: 46px; }
+
+  /* 首页 */
+  .hero {
+    background: var(--card-bg);
+    border: 1px solid #e5d9bd;
+    border-radius: 20px;
+    box-shadow: 0 8px 24px rgba(120, 95, 45, .15);
+    padding: 30px 22px 24px;
+    text-align: center;
+    margin-bottom: 16px;
+  }
+  .hero .big-emoji { font-size: 40px; }
+  .hero h1 { font-size: 20px; margin: 8px 0 6px; letter-spacing: 1px; }
+  .hero .desc { font-size: 12.5px; color: #8a7c60; line-height: 1.7; }
+  .stat-row { display: flex; gap: 10px; margin-top: 18px; }
+  .stat { flex: 1; background: var(--cream); border-radius: 12px; padding: 10px 0; }
+  .stat .n { font-size: 21px; font-weight: 700; color: #8a6420; }
+  .stat .l { font-size: 11px; color: #9c8c6d; margin-top: 2px; }
+
+  .btn-main {
+    width: 100%; padding: 15px 0;
+    border: none; border-radius: 14px;
+    background: var(--gold); color: #fff;
+    font-size: 16px; font-weight: 600;
+    cursor: pointer; transition: transform .12s ease;
+    position: relative;
+  }
+  .btn-main:active { transform: scale(.97); }
+  .btn-main.soft { background: #8a6420; }
+  .btn-ghost {
+    width: 100%; padding: 13px 0; margin-top: 10px;
+    border: 1.5px solid var(--gold); border-radius: 13px;
+    background: transparent; color: #8a6420;
+    font-size: 14.5px; font-weight: 600; cursor: pointer;
+  }
+  .btn-ghost.warn { border-color: #e0b4b4; color: var(--bad); }
+  .btn-skip {
+    width: 100%; margin-top: 10px; padding: 11px 0;
+    border: 1.5px solid #d9cbb0; border-radius: 12px;
+    background: transparent; color: #9c8c6d;
+    font-size: 13px; cursor: pointer;
+  }
+  .badge {
+    display: inline-block; min-width: 20px; padding: 1px 7px;
+    background: var(--bad); color: #fff;
+    border-radius: 10px; font-size: 11.5px; margin-left: 6px;
+    vertical-align: 2px;
+  }
+
+  /* 进度 */
+  .progress-box { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+  .progress-track { flex: 1; height: 8px; background: #ddd0b4; border-radius: 4px; overflow: hidden; }
+  .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--gold), var(--gold-light)); border-radius: 4px; transition: width .35s ease; }
+  .progress-text { font-size: 12px; color: #7a6b4d; white-space: nowrap; }
+
+  /* 卡片 */
+  .card {
+    position: relative;
+    background: var(--card-bg);
+    border-radius: 18px;
+    border: 1px solid #e5d9bd;
+    box-shadow: 0 8px 24px rgba(120, 95, 45, .15);
+    padding: 44px 20px 26px;
+    min-height: 325px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center;
+    margin-bottom: 14px;
+  }
+  .card-tag {
+    position: absolute; top: 14px; left: 14px;
+    font-size: 11px; padding: 3px 10px; border-radius: 20px; letter-spacing: 1px;
+  }
+  .tag-prefix { background: #f3e2c2; color: #8a6420; }
+  .tag-root   { background: #dde8d9; color: #3e6b3a; }
+  .tag-suffix { background: #e3dcec; color: #5a4a7d; }
+  .card-num { position: absolute; top: 14px; right: 14px; font-size: 11px; color: #b3a480; }
+
+  .q-label { font-size: 11px; letter-spacing: 3px; color: #b3a480; margin-bottom: 10px; }
+  .zh-text { font-size: 27px; font-weight: 700; line-height: 1.45; color: #3d3222; margin-bottom: 6px; }
+  .q-sub { font-size: 12px; color: #a5946e; margin-bottom: 18px; }
+
+  input[type="text"] {
+    width: 100%; max-width: 320px;
+    padding: 12px 14px;
+    font-size: 19px;
+    font-family: Georgia, "Times New Roman", serif;
+    text-align: center;
+    border: 2px solid #e0d2b2;
+    border-radius: 12px;
+    background: var(--cream);
+    color: #3d3222;
+    outline: none;
+    transition: border-color .2s;
+  }
+  input[type="text"]:focus { border-color: var(--gold); }
+
+  .hint-btn {
+    margin-top: 13px;
+    padding: 7px 16px;
+    font-size: 12px;
+    border: 1px dashed var(--gold);
+    background: transparent; color: #8a6420;
+    border-radius: 20px; cursor: pointer;
+  }
+  .hint-text {
+    margin-top: 12px;
+    font-size: 15px;
+    color: #8a6420;
+    background: #fbf3e2;
+    border-radius: 10px;
+    padding: 8px 16px;
+    letter-spacing: .5px;
+  }
+  .warn-text { margin-top: 10px; font-size: 12px; color: var(--bad); }
+
+  /* 反馈 */
+  .fb-icon { font-size: 38px; line-height: 1; }
+  .fb-icon.ok { color: var(--ok); }
+  .fb-icon.bad { color: var(--bad); }
+  .fb-word {
+    font-family: Georgia, serif; font-style: italic;
+    font-size: 25px; font-weight: 600; color: #3d3222;
+    margin-top: 8px; word-break: break-word; line-height: 1.3;
+  }
+  .fb-zh { font-size: 14px; color: #6b5b3d; margin-top: 4px; }
+  .fb-parts {
+    margin-top: 12px;
+    font-size: 12px; color: #7a6b4d;
+    background: var(--cream);
+    border: 1px dashed #d8c79c;
+    border-radius: 10px;
+    padding: 8px 12px; line-height: 1.6;
+  }
+  .fb-yours { margin-top: 10px; font-size: 12.5px; color: #9c8c6d; word-break: break-word; }
+  .fb-yours b { font-family: Georgia, serif; }
+  .fb-yours b.bad { color: var(--bad); }
+  .fb-yours b.ok { color: var(--ok); }
+  .fb-note { margin-top: 10px; font-size: 12px; color: var(--bad); background: #fdf0f0; border-radius: 8px; padding: 6px 10px; }
+
+  /* 结果 */
+  .result-panel {
+    background: var(--card-bg);
+    border-radius: 18px; border: 1px solid #e5d9bd;
+    box-shadow: 0 8px 24px rgba(120, 95, 45, .15);
+    padding: 26px 22px; text-align: center;
+  }
+  .result-panel .emoji { font-size: 44px; }
+  .result-panel h2 { margin: 8px 0 4px; font-size: 22px; }
+  .result-panel .sub { font-size: 13px; color: #8a7c60; }
+  .score-row { display: flex; gap: 12px; margin: 18px 0; }
+  .score-item { flex: 1; background: var(--cream); border-radius: 12px; padding: 12px 0; }
+  .score-item .num { font-size: 26px; font-weight: 700; }
+  .score-item .num.ok { color: var(--ok); }
+  .score-item .num.bad { color: var(--bad); }
+  .score-item .lab { font-size: 12px; color: #8a7c60; margin-top: 2px; }
+
+  /* 错题本 */
+  .note-head {
+    background: var(--card-bg);
+    border: 1px solid #e5d9bd;
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 12px;
+    display: flex; align-items: center; justify-content: space-between;
+    box-shadow: 0 6px 18px rgba(120, 95, 45, .1);
+  }
+  .note-head .info { font-size: 13px; color: #6b5b3d; }
+  .note-head .info b { color: var(--bad); font-size: 17px; }
+  .note-item {
+    background: var(--card-bg);
+    border: 1px solid #e5d9bd;
+    border-radius: 13px;
+    padding: 11px 14px;
+    margin-bottom: 9px;
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  }
+  .note-item .left { min-width: 0; }
+  .note-item .w {
+    font-family: Georgia, serif; font-size: 16px; color: #3d3222;
+    word-break: break-word; line-height: 1.35;
+  }
+  .note-item .m { font-size: 12px; color: #9c8c6d; margin-top: 3px; }
+  .note-item .m i { font-family: Georgia, serif; color: #8a6420; font-style: italic; }
+  .note-item .cnt {
+    flex-shrink: 0;
+    font-size: 11px; color: #fff; background: var(--bad);
+    border-radius: 20px; padding: 3px 9px;
+  }
+  .empty {
+    text-align: center; padding: 44px 20px;
+    color: #9c8c6d; font-size: 13px; line-height: 1.8;
+    background: var(--card-bg); border: 1px dashed #ddd0b4; border-radius: 16px;
+  }
+  .empty .e { font-size: 38px; display: block; margin-bottom: 8px; }
+
+  /* 全部内容 */
+  .all-content {
+    background: var(--card-bg);
+    border-radius: 16px; border: 1px solid #e5d9bd;
+    padding: 18px 14px 20px;
+    box-shadow: 0 6px 18px rgba(120, 95, 45, .12);
+  }
+  .all-content h3 {
+    font-size: 15px; margin: 18px 0 8px;
+    padding-left: 10px; border-left: 4px solid var(--gold);
+  }
+  .all-content h3:first-child { margin-top: 0; }
+  .all-content table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  .all-content th {
+    background: var(--gold); color: #fff; font-weight: 600;
+    padding: 7px 6px; text-align: left;
+  }
+  .all-content td { padding: 7px 6px; border-bottom: 1px solid #eee3c8; vertical-align: top; }
+  .all-content td.ex-cell { font-family: Georgia, serif; color: #4a3d28; word-break: break-word; }
+  .all-content td.term-cell { font-family: Georgia, serif; font-style: italic; color: #8a6420; white-space: nowrap; }
+
+  .review-flag {
+    font-size: 11px; letter-spacing: 1px; color: #8a6420;
+    background: #fbf3e2; border-radius: 20px;
+    padding: 3px 12px; margin-bottom: 8px;
+  }
+  .sub-nav { display: flex; justify-content: center; margin-top: 4px; }
+  .nav-prev {
+    border: none; background: transparent; color: #8a7c60;
+    font-size: 13.5px; padding: 9px 18px; border-radius: 20px;
+    cursor: pointer;
+  }
+  .nav-prev:active { background: rgba(160,140,100,.12); }
+  .nav-prev:disabled { opacity: .3; }
+
+
+  /* ===== 单元小测 ===== */
+  .quiz-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .quiz-bar .progress-track { flex: 1; }
+  .timer {
+    font-family: "SF Mono", Consolas, monospace;
+    font-size: 14px; font-weight: 700; color: #8a6420;
+    background: #fbf3e2; border-radius: 8px; padding: 4px 10px;
+    letter-spacing: .5px;
+  }
+  .timer.danger { color: #fff; background: var(--bad); }
+
+  .quiz-card {
+    position: relative;
+    background: var(--card-bg);
+    border: 1px solid #e5d9bd;
+    border-radius: 18px;
+    box-shadow: 0 8px 24px rgba(120, 95, 45, .15);
+    padding: 42px 18px 20px;
+    margin-bottom: 14px;
+  }
+  .q-text {
+    font-size: 15.5px;
+    line-height: 1.75;
+    color: #3d3222;
+    margin: 4px 0 18px;
+    text-align: left;
+  }
+  .q-text .blank { color: var(--gold); font-weight: 700; letter-spacing: 1px; }
+  .opt {
+    display: flex; align-items: flex-start; gap: 10px;
+    width: 100%; text-align: left;
+    padding: 11px 13px; margin-bottom: 9px;
+    background: var(--cream);
+    border: 1.6px solid #e8dcc2;
+    border-radius: 12px;
+    font-size: 14.5px; line-height: 1.5;
+    color: #3d3222; cursor: pointer;
+    transition: border-color .15s, background .15s;
+  }
+  .opt .lb { font-weight: 700; color: #a79570; flex-shrink: 0; width: 16px; }
+  .opt.selected { border-color: var(--gold); background: #fdf5e6; }
+  .opt.selected .lb { color: #8a6420; }
+  .opt:active { transform: scale(.99); }
+
+  .quiz-nav { display: flex; gap: 10px; }
+  .nav-half {
+    flex: 1; padding: 14px 0;
+    border-radius: 13px; font-size: 15px; font-weight: 600;
+    cursor: pointer; border: 1.5px solid #d9cbb0;
+    background: transparent; color: #8a7c60;
+  }
+  .nav-half.primary { flex: 1.4; border: none; background: var(--gold); color: #fff; }
+  .nav-half:disabled { opacity: .35; }
+
+  .review-list { margin-top: 16px; }
+  .rv-item {
+    background: var(--card-bg);
+    border: 1px solid #e5d9bd;
+    border-left: 4px solid var(--ok);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    text-align: left;
+  }
+  .rv-item.bad { border-left-color: var(--bad); }
+  .rv-head { font-size: 11px; color: #9c8c6d; margin-bottom: 5px; letter-spacing: .5px; }
+  .rv-q { font-size: 14px; line-height: 1.7; color: #3d3222; }
+  .rv-q b { color: var(--ok); }
+  .rv-ans { font-size: 12.5px; color: #6b5b3d; margin-top: 7px; }
+  .rv-ans .wrong { color: var(--bad); font-weight: 600; }
+  .rv-ans .right { color: var(--ok); font-weight: 600; }
+  .rv-exp { font-size: 12px; color: #9c8c6d; margin-top: 5px; line-height: 1.65; }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- 顶栏 -->
+  <div class="topbar">
+    <button class="back" id="backBtn" onclick="onBack()">←</button>
+    <div class="title" id="topTitle">医学例词卡片</div>
+    <div class="spacer"></div>
+  </div>
+
+  <!-- 首页 -->
+  <div id="homeView">
+    <div class="hero">
+      <div class="big-emoji">🃏</div>
+      <h1>医学例词拼写卡片</h1>
+      <p class="desc">看中文 → 拼出英文例词<br>卡住可看开头提示 · 每轮顺序随机</p>
+      <div class="stat-row">
+        <div class="stat"><div class="n">29</div><div class="l">全部词条</div></div>
+        <div class="stat"><div class="n" id="statWrong">0</div><div class="l">错题本</div></div>
+        <div class="stat"><div class="n" id="statMastered">0</div><div class="l">已掌握</div></div>
+      </div>
+    </div>
+
+    <button class="btn-main" onclick="startAll()">🚀 开始练习</button>
+    <button class="btn-ghost" onclick="startQuiz()">📝 单元小测 · 15 题 / 10 分钟</button>
+    <button class="btn-ghost" onclick="openNotebook()">📕 错题本<span class="badge hidden" id="homeBadge">0</span></button>
+    <button class="btn-ghost" onclick="openAll()">📖 查看全部内容</button>
+  </div>
+
+  <!-- 练习 -->
+  <div id="studyView" class="hidden">
+    <div class="progress-box">
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="progress-text" id="progressText">0 / 29</div>
+    </div>
+
+    <div class="card" id="card">
+      <span class="card-tag" id="cardTag">Prefix</span>
+      <span class="card-num" id="cardNum">1/29</span>
+
+      <div id="askView" style="width:100%;display:flex;flex-direction:column;align-items:center;">
+        <div class="q-label">中 文 意 思</div>
+        <div class="zh-text" id="zhText">抗炎的</div>
+        <div class="q-sub">请拼出对应的英文例词</div>
+        <input type="text" id="answerInput" autocomplete="off" autocorrect="off"
+               autocapitalize="off" spellcheck="false" placeholder="输入英文单词…">
+        <button class="hint-btn" id="hintBtn" onclick="toggleHint()">💡 需要提示</button>
+        <div class="hint-text hidden" id="hintText"></div>
+        <div class="warn-text hidden" id="warnText">请用英文拼写哦～</div>
+      </div>
+
+      <div id="fbView" class="hidden" style="width:100%;display:flex;flex-direction:column;align-items:center;">
+        <div class="review-flag hidden" id="reviewFlag">回顾第 1 题</div>
+        <div class="fb-icon" id="fbIcon">✓</div>
+        <div class="fb-word" id="fbWord">anti-inflammatory</div>
+        <div class="fb-zh" id="fbZh">抗炎的</div>
+        <div class="fb-parts" id="fbParts"></div>
+        <div class="fb-yours" id="fbYours"></div>
+        <div class="fb-note hidden" id="fbNote"></div>
+      </div>
+    </div>
+
+    <div id="askBtns">
+      <button class="btn-main" onclick="submitAnswer()">确认答案</button>
+      <button class="btn-skip" onclick="giveUp()">不会，直接看答案</button>
+    </div>
+    <div id="fbBtns" class="hidden">
+      <button class="btn-main" id="nextBtn" onclick="nextCard()">下一张 →</button>
+    </div>
+    <div id="reviewBtns" class="hidden">
+      <button class="btn-main" id="backCurBtn" onclick="restoreCurrent()">返回当前题 →</button>
+    </div>
+
+    <div class="sub-nav">
+      <button class="nav-prev" id="prevBtn" onclick="goPrev()">← 上一题</button>
+    </div>
+  </div>
+
+  <!-- 结果 -->
+  <div id="resultView" class="hidden">
+    <div class="result-panel">
+      <div class="emoji" id="resultEmoji">🎉</div>
+      <h2 id="resultTitle">全部完成！</h2>
+      <p class="sub" id="resultSub">本轮 29 张</p>
+      <div class="score-row">
+        <div class="score-item"><div class="num ok" id="scoreRight">0</div><div class="lab">拼对</div></div>
+        <div class="score-item"><div class="num bad" id="scoreWrong">0</div><div class="lab">拼错</div></div>
+        <div class="score-item"><div class="num" id="scoreRate" style="color:#8a6420">0%</div><div class="lab">正确率</div></div>
+      </div>
+      <button class="btn-main" id="btnReviewRound" onclick="reviewRound()">🔁 重刷本轮错的</button>
+      <button class="btn-ghost" onclick="openNotebook()">📕 打开错题本<span class="badge hidden" id="resBadge">0</span></button>
+      <button class="btn-ghost" onclick="goHome()">🏠 返回首页</button>
+    </div>
+  </div>
+
+  <!-- 错题本 -->
+  <div id="noteView" class="hidden">
+    <div id="noteBody"></div>
+  </div>
+
+
+  <!-- 单元小测 -->
+  <div id="quizView" class="hidden">
+    <div class="quiz-bar">
+      <div class="progress-track"><div class="progress-fill" id="qFill"></div></div>
+      <div class="timer" id="qTimer">10:00</div>
+    </div>
+
+    <div class="quiz-card">
+      <span class="card-tag" id="qType">构词法</span>
+      <span class="card-num" id="qNum">1/15</span>
+      <div class="q-text" id="qText"></div>
+      <div id="qOpts"></div>
+    </div>
+
+    <div class="quiz-nav">
+      <button class="nav-half" id="qPrev" onclick="quizPrev()">← 上一题</button>
+      <button class="nav-half primary" id="qNext" onclick="quizNext()">下一题 →</button>
+    </div>
+  </div>
+
+  <!-- 小测结果 -->
+  <div id="quizResultView" class="hidden">
+    <div class="result-panel">
+      <div class="emoji" id="qrEmoji">📝</div>
+      <h2 id="qrTitle">小测完成</h2>
+      <p class="sub" id="qrSub"></p>
+      <div class="score-row">
+        <div class="score-item"><div class="num ok" id="qrRight">0</div><div class="lab">答对</div></div>
+        <div class="score-item"><div class="num bad" id="qrWrong">0</div><div class="lab">答错</div></div>
+        <div class="score-item"><div class="num" id="qrScore" style="color:#8a6420">0</div><div class="lab">得分</div></div>
+      </div>
+      <button class="btn-main" id="qrRetry" onclick="retryWrongQuiz()">🔁 重做错题</button>
+      <button class="btn-ghost" onclick="startQuiz()">↺ 再来一套</button>
+      <button class="btn-ghost" onclick="goHome()">🏠 返回首页</button>
+    </div>
+    <div class="review-list" id="qrList"></div>
+  </div>
+
+  <!-- 全部内容 -->
+  <div id="allView" class="hidden">
+    <div class="all-content" id="allBody"></div>
+    <button class="btn-ghost" onclick="goHome()">🏠 返回首页</button>
+  </div>
+
+</div>
+
+<script>
+/* ========== 数据 ========== */
+const TAG_NAME = { prefix: "Prefix", root: "Root", suffix: "Suffix" };
+
+const RAW = [
+  // 第 1 页
+  { zh:"抗炎的",       w:"anti-inflammatory", k:"prefix", p:"anti-",       d:"anti-（抗）+ inflamm（炎症）+ -atory" },
+  { zh:"代谢的",       w:"metabolic",         k:"prefix", p:"meta-",       d:"meta-（变化）+ bol（投掷）+ -ic" },
+  { zh:"单不饱和的",   w:"monounsaturated",   k:"prefix", p:"mono-",       d:"mono-（单一）+ unsaturated（不饱和的）" },
+  { zh:"多不饱和的",   w:"polyunsaturated",   k:"prefix", p:"poly-",       d:"poly-（多）+ unsaturated（不饱和的）" },
+  { zh:"心血管的",     w:"cardiovascular",    k:"root",   p:"cardi/o",     d:"cardi/o（心）+ vascul（血管）+ -ar" },
+  { zh:"碳水化合物",   w:"carbohydrate",      k:"root",   p:"hydr/o",      d:"carbo（碳）+ hydr/o（水）+ -ate" },
+  { zh:"抗氧化剂",     w:"antioxidant",       k:"root",   p:"ox/i",        d:"anti-（抗）+ ox/i（氧）+ -ant（物质）" },
+  { zh:"饮食的",       w:"dietary",           k:"suffix", p:"-ary",        d:"diet（饮食）+ -ary（与…有关的）" },
+  { zh:"碳水化合物",   w:"carbohydrate",      k:"suffix", p:"-ate",        d:"carbo（碳）+ hydr/o（水）+ -ate（化合物）" },
+  { zh:"营养素",       w:"nutrient",          k:"suffix", p:"-ent / -ant", d:"nutri（滋养）+ -ent（物质）" },
+  { zh:"营养师",       w:"dietitian",         k:"suffix", p:"-ian",        d:"diet（饮食）+ -itian（从事…的人）" },
+  // 第 2 页
+  { zh:"心律失常",     w:"arrhythmia",        k:"prefix", p:"a-",          d:"a-（无）+ rhythm（节律）+ -ia（状态）" },
+  { zh:"新生儿的",     w:"neonatal",          k:"prefix", p:"neo-",        d:"neo-（新）+ nat（出生）+ -al" },
+  { zh:"心房的",       w:"atrial",            k:"root",   p:"atri/o",      d:"atri/o（房）+ -al（…的）" },
+  { zh:"心动过缓",     w:"bradycardia",       k:"root",   p:"brady",       d:"brady（慢）+ cardi/o（心）+ -ia" },
+  { zh:"支气管痉挛",   w:"bronchospasm",      k:"root",   p:"bronch/o",    d:"bronch/o（气管）+ spasm（痉挛）" },
+  { zh:"儿科的",       w:"pediatric",         k:"root",   p:"ped",         d:"ped（儿童）+ -iatric（医疗的）" },
+  { zh:"心动过速",     w:"tachycardia",       k:"root",   p:"tachy",       d:"tachy（快）+ cardi/o（心）+ -ia" },
+  { zh:"阿片类药物",   w:"opioid",            k:"suffix", p:"-oid",        d:"opi（鸦片）+ -oid（像…的）" },
+  // 第 3 页
+  { zh:"功能障碍",     w:"dysfunction",       k:"prefix", p:"dys-",        d:"dys-（异常）+ function（功能）" },
+  { zh:"超声",         w:"ultrasound",        k:"prefix", p:"ultra-",      d:"ultra-（超出）+ sound（声）" },
+  { zh:"血管造影图",   w:"angiogram",         k:"root",   p:"angi/o",      d:"angi/o（血管）+ -gram（图）" },
+  { zh:"诊断",         w:"diagnosis",         k:"root",   p:"gnos",        d:"dia-（通过）+ gnos（知识）+ -is" },
+  { zh:"绝经的",       w:"menopausal",        k:"root",   p:"men/o",       d:"men/o（月经）+ paus（停止）+ -al" },
+  { zh:"心肌的",       w:"myocardial",        k:"root",   p:"my/o",        d:"my/o（肌）+ cardi/o（心）+ -al" },
+  { zh:"雌激素",       w:"estrogen",          k:"suffix", p:"-gen",        d:"estro（发情）+ -gen（生成物）" },
+  { zh:"超声心动图",   w:"echocardiogram",    k:"suffix", p:"-gram",       d:"echo（回声）+ cardi/o（心）+ -gram（图）" },
+  { zh:"心脏病学",     w:"cardiology",        k:"suffix", p:"-ology",      d:"cardi/o（心）+ -ology（学科）" },
+  { zh:"心肌病",       w:"cardiomyopathy",    k:"suffix", p:"-pathy",      d:"cardi/o（心）+ my/o（肌）+ -pathy（疾病）" }
+];
+
+const CARDS = RAW.map((c, i) => Object.assign({}, c, { id: i }));
+const BY_ID = {};
+CARDS.forEach(c => BY_ID[c.id] = c);
+
+/* ========== 错题本存储 ========== */
+const KEY = "med_terms_wrongbook_v1";
+const KEY_SEEN = "med_terms_seen_v1";
+let wrongMap = {};   // { id: 错误次数 }
+let seenMap = {};    // { id: true } 做过的词条
+
+function load() {
+  try {
+    const s = localStorage.getItem(KEY);
+    if (s) {
+      const o = JSON.parse(s);
+      Object.keys(o).forEach(k => {
+        if (BY_ID[k]) wrongMap[k] = o[k];
+      });
+    }
+    const s2 = localStorage.getItem(KEY_SEEN);
+    if (s2) {
+      const o2 = JSON.parse(s2);
+      Object.keys(o2).forEach(k => {
+        if (BY_ID[k]) seenMap[k] = true;
+      });
+    }
+  } catch (e) { /* 本地存储不可用时仅内存记录 */ }
+}
+function save() {
+  try {
+    localStorage.setItem(KEY, JSON.stringify(wrongMap));
+    localStorage.setItem(KEY_SEEN, JSON.stringify(seenMap));
+  } catch (e) {}
+}
+function wrongCount() { return Object.keys(wrongMap).length; }
+
+/* ========== 工具 ========== */
+const $ = id => document.getElementById(id);
+const input = $("answerInput");
+
+function shuffle(a) {
+  a = a.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function norm(s) { return s.toLowerCase().replace(/[\s\-'\u2019]/g, ""); }
+function letters(w) { return w.replace(/[^a-zA-Z]/g, ""); }
+
+/* ========== 视图切换 ========== */
+function show(id) {
+  ["homeView", "studyView", "resultView", "noteView", "allView", "quizView", "quizResultView"].forEach(v => {
+    $(v).classList.toggle("hidden", v !== id);
+  });
+  window.scrollTo(0, 0);
+}
+
+function goHome() {
+  stopTimer();
+  mode = "all";
+  refreshHome();
+  $("backBtn").classList.add("hidden");
+  $("topTitle").textContent = "医学例词卡片";
+  show("homeView");
+}
+
+function refreshHome() {
+  const n = wrongCount();
+  $("statWrong").textContent = n;
+  $("statMastered").textContent = masteredCount();
+  const badge = $("homeBadge");
+  badge.textContent = n;
+  badge.classList.toggle("hidden", n === 0);
+  syncBadges();
+}
+function syncBadges() {
+  const n = wrongCount();
+  ["resBadge"].forEach(id => {
+    const el = $(id);
+    el.textContent = n;
+    el.classList.toggle("hidden", n === 0);
+  });
+}
+function masteredCount() {
+  // 已练习过且不在错题本中的词条数（以“做过”为粗略估计）
+  const done = Object.keys(seenMap).filter(k => BY_ID[k] && !wrongMap[k]).length;
+  return done;
+}
+
+/* ========== 练习会话 ========== */
+let deck = [];          // 本轮 id 序列
+let pos = 0;
+let roundWrong = [];    // 本轮答错的 id
+let totalRight = 0, totalWrong = 0;
+let phase = "ask";
+let mode = "all";       // all | wrong | replay
+let masteredThisRound = 0;
+let history = [];       // 本轮每道已答题的记录 {id, isRight, ans, removed}
+let reviewIdx = -1;     // 正在回顾的题号
+let returnState = "ask";// 进入回顾前的状态（ask / feedback）
+
+function startDeck(ids, m) {
+  deck = ids; pos = 0; roundWrong = []; totalRight = 0; totalWrong = 0;
+  masteredThisRound = 0; history = []; reviewIdx = -1;
+  mode = m || "all"; phase = "ask";
+
+  $("backBtn").classList.remove("hidden");
+  $("topTitle").textContent = mode === "wrong" ? "错题本复习" : "练习中";
+  show("studyView");
+  renderCard();
+}
+
+function startAll() {
+  startDeck(shuffle(CARDS.map(c => c.id)), "all");
+}
+
+function startWrong() {
+  const ids = Object.keys(wrongMap).map(Number).filter(id => BY_ID[id]);
+  if (!ids.length) return;
+  startDeck(shuffle(ids), "wrong");
+}
+
+function exitStudy() {
+  const st = $("studyView");
+  if (!st.classList.contains("hidden") && pos > 0) {
+    if (!confirm("退出本次练习？本轮进度不会保存。")) return;
+  }
+  goHome();
+}
+
+function renderCard() {
+  const c = BY_ID[deck[pos]];
+  phase = "ask";
+
+  $("cardTag").textContent = TAG_NAME[c.k];
+  $("cardTag").className = "card-tag tag-" + c.k;
+  $("cardNum").textContent = (pos + 1) + "/" + deck.length;
+  $("zhText").textContent = c.zh;
+
+  const L = letters(c.w);
+  const head = L.slice(0, Math.min(4, L.length));
+  $("hintText").textContent = "以 " + head + "… 开头，共 " + L.length + " 个字母";
+  $("hintText").classList.add("hidden");
+  $("hintBtn").textContent = "💡 需要提示";
+  $("warnText").classList.add("hidden");
+
+  $("askView").classList.remove("hidden");
+  $("fbView").classList.add("hidden");
+  $("askBtns").classList.remove("hidden");
+  $("fbBtns").classList.add("hidden");
+  $("reviewBtns").classList.add("hidden");
+  $("reviewFlag").classList.add("hidden");
+  $("fbNote").classList.add("hidden");
+  reviewIdx = -1;
+
+  input.value = "";
+  input.disabled = false;
+
+  $("progressFill").style.width = Math.round(pos / deck.length * 100) + "%";
+  $("progressText").textContent = pos + " / " + deck.length;
+  updatePrevBtn();
+}
+
+function toggleHint() {
+  const h = $("hintText");
+  h.classList.toggle("hidden");
+  $("hintBtn").textContent = h.classList.contains("hidden") ? "💡 需要提示" : "🙈 收起提示";
+}
+
+function submitAnswer() {
+  if (phase !== "ask") return;
+  const val = input.value.trim();
+  if (!val) { input.focus(); return; }
+  if (/[\u4e00-\u9fa5]/.test(val)) {
+    $("warnText").classList.remove("hidden");
+    return;
+  }
+  $("warnText").classList.add("hidden");
+  reveal(norm(val) === norm(BY_ID[deck[pos]].w), val);
+}
+
+function giveUp() {
+  if (phase !== "ask") return;
+  reveal(false, "");
+}
+
+function reveal(isRight, userAnswer) {
+  phase = "feedback";
+  const c = BY_ID[deck[pos]];
+  seenMap[c.id] = true;
+
+  let removedFromBook = false;
+
+  if (isRight) {
+    totalRight++;
+    if (wrongMap[c.id]) {           // 错题本里答对 → 移出
+      delete wrongMap[c.id];
+      removedFromBook = true;
+      masteredThisRound++;
+    }
+  } else {
+    totalWrong++;
+    roundWrong.push(c.id);
+    wrongMap[c.id] = (wrongMap[c.id] || 0) + 1;   // 记入错题本
+  }
+  save();
+
+  history[pos] = { id: c.id, isRight: isRight, ans: userAnswer, removed: removedFromBook };
+
+  $("cardNum").textContent = (pos + 1) + "/" + deck.length;
+  renderFb(c, isRight, userAnswer, false, removedFromBook);
+  updatePrevBtn();
+}
+
+/* 统一的“答案卡”渲染：isReview=true 时为回顾查看态 */
+function renderFb(c, isRight, ans, isReview, removedFromBook) {
+  $("askView").classList.add("hidden");
+  $("fbView").classList.remove("hidden");
+  $("askBtns").classList.add("hidden");
+  $("fbBtns").classList.toggle("hidden", isReview);
+  $("reviewBtns").classList.toggle("hidden", !isReview);
+  $("reviewFlag").classList.toggle("hidden", !isReview);
+
+  $("fbIcon").textContent = isRight ? "✓" : "✗";
+  $("fbIcon").className = "fb-icon " + (isRight ? "ok" : "bad");
+  $("fbWord").textContent = c.w;
+  $("fbZh").textContent = c.zh;
+  $("fbParts").innerHTML = "对应词素：<b>" + c.p + "</b><br><span style='font-size:11.5px;color:#9c8c6d'>" + c.d + "</span>";
+
+  $("fbYours").innerHTML = ans
+    ? "你的答案：<b class='" + (isRight ? "ok" : "bad") + "'>" + ans + "</b>"
+    : "没关系，记住它就好";
+
+  const note = $("fbNote");
+  if (isReview) {
+    note.classList.add("hidden");
+  } else if (!isRight) {
+    note.textContent = "📕 已收入错题本（累计错 " + wrongMap[c.id] + " 次）";
+    note.classList.remove("hidden");
+    note.style.color = "var(--bad)";
+    note.style.background = "#fdf0f0";
+  } else if (removedFromBook) {
+    note.textContent = "📕 已从错题本移出";
+    note.classList.remove("hidden");
+    note.style.color = "var(--ok)";
+    note.style.background = "#eef7f0";
+  } else {
+    note.classList.add("hidden");
+  }
+
+  if (!isReview) {
+    $("nextBtn").textContent = (pos + 1 >= deck.length) ? "查看结果 →" : "下一张 →";
+  }
+}
+
+/* 回顾第 i 题（i 从 0 起） */
+function showReview(i) {
+  if (i < 0 || i >= history.length) return;
+  if (phase !== "review") returnState = (phase === "feedback") ? "feedback" : "ask";
+  reviewIdx = i;
+  phase = "review";
+
+  const rec = history[i];
+  const c = BY_ID[rec.id];
+
+  $("cardTag").textContent = TAG_NAME[c.k];
+  $("cardTag").className = "card-tag tag-" + c.k;
+  $("cardNum").textContent = (i + 1) + "/" + deck.length;
+
+  $("reviewFlag").textContent = "回顾第 " + (i + 1) + " 题 · " + (rec.isRight ? "当时答对" : "当时答错");
+  $("backCurBtn").textContent = returnState === "feedback" ? "回到本题结果 →" : "回到第 " + (pos + 1) + " 题 →";
+
+  renderFb(c, rec.isRight, rec.ans, true);
+  updatePrevBtn();
+}
+
+/* 从回顾态回到当前题 */
+function restoreCurrent() {
+  reviewIdx = -1;
+  $("reviewFlag").classList.add("hidden");
+
+  if (returnState === "feedback" && history[pos]) {
+    const rec = history[pos];
+    const c = BY_ID[rec.id];
+    phase = "feedback";
+    $("cardTag").textContent = TAG_NAME[c.k];
+    $("cardTag").className = "card-tag tag-" + c.k;
+    $("cardNum").textContent = (pos + 1) + "/" + deck.length;
+    renderFb(c, rec.isRight, rec.ans, false, rec.removed);
+    updatePrevBtn();
+  } else {
+    renderCard();
+  }
+}
+
+/* 上一题：答题中/反馈中查看上一题，回顾中继续往前翻 */
+function goPrev() {
+  if (phase === "review") {
+    if (reviewIdx > 0) showReview(reviewIdx - 1);
+    return;
+  }
+  if (pos > 0) showReview(pos - 1);
+}
+
+function updatePrevBtn() {
+  const dis = (phase === "review") ? (reviewIdx === 0) : (pos === 0);
+  $("prevBtn").disabled = dis;
+}
+
+function nextCard() {
+  pos++;
+  if (pos >= deck.length) finish();
+  else renderCard();
+}
+
+function finish() {
+  $("progressFill").style.width = "100%";
+  $("progressText").textContent = deck.length + " / " + deck.length;
+
+  $("scoreRight").textContent = totalRight;
+  $("scoreWrong").textContent = totalWrong;
+  const rate = Math.round(totalRight / (totalRight + totalWrong) * 100);
+  $("scoreRate").textContent = rate + "%";
+
+  $("resultEmoji").textContent = rate >= 90 ? "🏆" : rate >= 70 ? "🎉" : rate >= 50 ? "💪" : "📖";
+  $("resultTitle").textContent = totalWrong === 0 ? "全部拼对！" : "本轮完成";
+
+  let sub = "";
+  if (totalWrong === 0) sub = "本轮 " + totalRight + " 张全对，太棒了！";
+  else sub = "本轮 " + (totalRight + totalWrong) + " 张，拼错 " + totalWrong + " 张";
+  if (mode === "wrong") sub += " · 错题本还剩 " + wrongCount() + " 张";
+  else if (masteredThisRound > 0) sub += " · 从错题本清掉 " + masteredThisRound + " 张";
+  $("resultSub").textContent = sub;
+
+  const btn = $("btnReviewRound");
+  if (roundWrong.length === 0) {
+    btn.disabled = true; btn.style.opacity = ".35";
+    btn.textContent = "本轮没有拼错的卡片";
+  } else {
+    btn.disabled = false; btn.style.opacity = "1";
+    btn.textContent = "🔁 重刷本轮拼错的 " + roundWrong.length + " 张";
+  }
+
+  $("backBtn").classList.add("hidden");
+  $("topTitle").textContent = "本轮结果";
+  syncBadges();
+  show("resultView");
+}
+
+function reviewRound() {
+  if (!roundWrong.length) return;
+  startDeck(shuffle(roundWrong), "replay");
+}
+
+/* ========== 错题本页面 ========== */
+function openNotebook() {
+  renderNotebook();
+  $("backBtn").classList.remove("hidden");
+  $("topTitle").textContent = "错题本";
+  show("noteView");
+}
+
+function renderNotebook() {
+  const ids = Object.keys(wrongMap).map(Number).filter(id => BY_ID[id]);
+
+  if (!ids.length) {
+    $("noteBody").innerHTML =
+      '<div class="empty"><span class="e">🎉</span>错题本是空的<br>所有练过的词都已经记住了</div>' +
+      '<button class="btn-main" style="margin-top:14px" onclick="startAll()">🚀 开始新一轮练习</button>';
+    syncBadges();
+    return;
+  }
+
+  // 随机顺序展示
+  const list = shuffle(ids).map(id => {
+    const c = BY_ID[id];
+    return '<div class="note-item">' +
+      '<div class="left">' +
+        '<div class="w">' + c.w + '</div>' +
+        '<div class="m">' + c.zh + ' · <i>' + c.p + '</i></div>' +
+      '</div>' +
+      '<div class="cnt">错 ' + wrongMap[id] + ' 次</div>' +
+    '</div>';
+  }).join("");
+
+  $("noteBody").innerHTML =
+    '<div class="note-head">' +
+      '<div class="info">共 <b>' + ids.length + '</b> 张待巩固</div>' +
+      '<div class="info" style="font-size:11.5px;color:#9c8c6d">按错误次数累计</div>' +
+    '</div>' +
+    list +
+    '<button class="btn-main" style="margin-top:14px" onclick="startWrong()">▶ 复习错题（随机顺序）</button>' +
+    '<button class="btn-ghost warn" onclick="clearBook()">🗑 清空错题本</button>';
+  syncBadges();
+}
+
+function clearBook() {
+  if (!confirm("确定清空错题本？此操作不可恢复。")) return;
+  wrongMap = {};
+  save();
+  renderNotebook();
+  syncBadges();
+}
+
+/* ========== 全部内容（组内随机） ========== */
+function openAll() {
+  const titles = { prefix: "Prefix 前缀", root: "Root 词根", suffix: "Suffix 后缀" };
+  let html = "";
+  ["prefix", "root", "suffix"].forEach(k => {
+    const rows = shuffle(CARDS.filter(c => c.k === k))
+      .map(c => '<tr><td class="ex-cell">' + c.w + '</td><td>' + c.zh + '</td><td class="term-cell">' + c.p + '</td></tr>')
+      .join("");
+    html += '<h3>' + titles[k] + '</h3>' +
+            '<table><tr><th>Example</th><th>中文</th><th>词素</th></tr>' + rows + '</table>';
+  });
+  $("allBody").innerHTML = html;
+  $("backBtn").classList.remove("hidden");
+  $("topTitle").textContent = "全部内容（随机排序）";
+  show("allView");
+}
+
+/* ========== 键盘 ========== */
+document.addEventListener("keydown", e => {
+  if ($("studyView").classList.contains("hidden")) return;
+  if (e.key === "ArrowLeft") { e.preventDefault(); goPrev(); return; }
+  if (e.key !== "Enter") return;
+  if (phase === "ask") submitAnswer();
+  else if (phase === "review") restoreCurrent();
+  else nextCard();
+});
+
+
+/* ========== 单元小测 ========== */
+const QUIZ = [
+  { k:"构词法",
+    q:'The prefix "meta-" means ______.',
+    o:["change","heart","disease","knowledge"], a:"change", cid:1,
+    e:'meta- 表示“变化、转变”，如 metabolic（代谢的）。heart 是 cardi/o，disease 是 -pathy，knowledge 是 gnos。' },
+
+  { k:"构词法",
+    q:'The suffix "-pathy" means ______.',
+    o:["disease","a record or picture","like","the study of"], a:"disease", cid:28,
+    e:'-pathy 意为“疾病”，如 cardiomyopathy（心肌病）。-gram 是“图/记录”，-oid 是“像…的”，-ology 是“学科”。' },
+
+  { k:"构词法",
+    q:'The combining form "my/o" means ______.',
+    o:["muscle","water","oxygen","vessel"], a:"muscle", cid:24,
+    e:'my/o 意为“肌”，如 myocardial（心肌的）。water 是 hydr/o，oxygen 是 ox/i，vessel 是 angi/o。' },
+
+  { k:"教材习题",
+    q:'Olive oil is a great source of ______ fats, which are considered heart healthy and can help lower bad cholesterol levels.',
+    o:["monounsaturated","polyunsaturated","supersaturated","saturated"], a:"monounsaturated", cid:2,
+    e:'mono-（单一）+ unsaturated（不饱和的）→ 单不饱和的。橄榄油、牛油果主要含单不饱和脂肪。' },
+
+  { k:"教材习题",
+    q:'______ fatty acids contain more than one double bond in their carbon chain and are found in foods such as fish and nuts.',
+    o:["Polyunsaturated","Monounsaturated","Saturated","Hydrogenated"], a:"Polyunsaturated", cid:3,
+    e:'poly-（多）+ unsaturated（不饱和的）→ 多不饱和的，碳链上含多个双键，多见于深海鱼和坚果。' },
+
+  { k:"教材习题",
+    q:'Regular aerobic exercise improves ______ health by strengthening the heart and improving blood circulation.',
+    o:["cardiovascular","neurological","respiratory","digestive"], a:"cardiovascular", cid:4,
+    e:'cardi/o（心）+ vascul（血管）+ -ar（与…有关的）→ 心血管的。' },
+
+  { k:"教材习题",
+    q:'Vitamin C is a powerful ______ that protects cells from damage caused by free radicals.',
+    o:["antioxidant","antibiotic","antibody","antigen"], a:"antioxidant", cid:6,
+    e:'anti-（抗）+ ox/i（氧）+ -ant（物质）→ 抗氧化剂。' },
+
+  { k:"教材习题",
+    q:'A ______ is a healthcare professional who specializes in food and nutrition and helps people plan healthy diets.',
+    o:["dietitian","physician","pharmacist","therapist"], a:"dietitian", cid:10,
+    e:'diet（饮食）+ -ian（专门从事…的人）→ 营养师。注意与 dietary（饮食的，-ary）区分。' },
+
+  { k:"教材习题",
+    q:'______ are substances in food that the body needs in order to grow, repair itself and stay healthy.',
+    o:["Nutrients","Additives","Toxins","Calories"], a:"Nutrients", cid:9,
+    e:'nutri（滋养）+ -ent（物质）→ 营养素，句中作复数主语用 Nutrients。' },
+
+  { k:"教材习题",
+    q:'The patient was diagnosed with ______, a condition in which the heart beats too slowly, usually fewer than 60 times per minute.',
+    o:["bradycardia","tachycardia","arrhythmia","hypertension"], a:"bradycardia", cid:14,
+    e:'brady（慢）+ cardi/o（心）+ -ia（状态）→ 心动过缓。tachy- 相反，表示“快”。' },
+
+  { k:"教材习题",
+    q:'______ is a condition in which the heart beats abnormally fast, often more than 100 beats per minute.',
+    o:["Tachycardia","Bradycardia","Cardiomyopathy","Atherosclerosis"], a:"Tachycardia", cid:17,
+    e:'tachy（快）+ cardi/o（心）+ -ia → 心动过速。' },
+
+  { k:"教材习题",
+    q:'The doctor used ______, a painless imaging technique that uses high-frequency sound waves, to examine the patient\u2019s internal organs.',
+    o:["ultrasound","an X-ray","an MRI","an endoscope"], a:"ultrasound", cid:20,
+    e:'ultra-（超出）+ sound（声）→ 超声。' },
+
+  { k:"教材习题",
+    q:'After the stroke, the patient suffered from ______ of the left arm \u2014 it could no longer move normally.',
+    o:["dysfunction","dislocation","infection","inflammation"], a:"dysfunction", cid:19,
+    e:'dys-（异常）+ function（功能）→ 功能障碍。' },
+
+  { k:"词汇拓展",
+    q:'______ is the branch of medicine that deals with the heart and its diseases.',
+    o:["Cardiology","Neurology","Oncology","Dermatology"], a:"Cardiology", cid:27,
+    e:'cardi/o（心）+ -ology（学科、研究）→ 心脏病学。' },
+
+  { k:"词汇拓展",
+    q:'______ is a group of diseases that primarily affect the heart muscle, leading to impaired heart function.',
+    o:["Cardiomyopathy","Arrhythmia","Bradycardia","Tachycardia"], a:"Cardiomyopathy", cid:28,
+    e:'cardi/o（心）+ my/o（肌）+ -pathy（疾病）→ 心肌病。' }
+];
+
+let qDeck = [], qPos = 0, qAns = [], qOrder = {}, qTotal = 15;
+let qTimerId = null, qLeft = 600, qStartTs = 0, qMode = "full", lastWrongQ = [];
+
+function startQuiz() {
+  beginQuiz(shuffle(QUIZ.map((_, i) => i)), "full");
+}
+
+function beginQuiz(ids, m) {
+  qDeck = ids; qPos = 0; qTotal = ids.length;
+  qAns = new Array(ids.length).fill(null);
+  qOrder = {}; qMode = m;
+  qLeft = (m === "full") ? 600 : Math.max(120, ids.length * 45);
+  qStartTs = Date.now();
+
+  $("backBtn").classList.remove("hidden");
+  $("topTitle").textContent = (m === "full") ? "单元小测" : "错题重做";
+  show("quizView");
+  startTimer();
+  renderQuiz();
+}
+
+function startTimer() {
+  stopTimer();
+  updateTimerText();
+  qTimerId = setInterval(() => {
+    qLeft--;
+    updateTimerText();
+    if (qLeft <= 0) { stopTimer(); submitQuiz(true); }
+  }, 1000);
+}
+function stopTimer() {
+  if (qTimerId) { clearInterval(qTimerId); qTimerId = null; }
+}
+function updateTimerText() {
+  const mm = Math.floor(Math.max(qLeft, 0) / 60);
+  const ss = Math.max(qLeft, 0) % 60;
+  const el = $("qTimer");
+  el.textContent = mm + ":" + String(ss).padStart(2, "0");
+  el.classList.toggle("danger", qLeft <= 60);
+}
+
+function renderQuiz() {
+  const q = QUIZ[qDeck[qPos]];
+  $("qType").textContent = q.k;
+  $("qNum").textContent = (qPos + 1) + "/" + qTotal;
+  $("qText").innerHTML = q.q.replace(/_{3,}/, '<span class="blank">______</span>');
+
+  if (!qOrder[qPos]) qOrder[qPos] = shuffle(q.o.map((_, i) => i));
+  const letters = ["A", "B", "C", "D"];
+  $("qOpts").innerHTML = qOrder[qPos].map((oi, idx) => {
+    const sel = (qAns[qPos] === q.o[oi]) ? " selected" : "";
+    return '<button class="opt' + sel + '" onclick="pickOption(' + oi + ')">' +
+      '<span class="lb">' + letters[idx] + '</span><span>' + q.o[oi] + '</span></button>';
+  }).join("");
+
+  $("qPrev").disabled = (qPos === 0);
+  $("qNext").textContent = (qPos === qTotal - 1) ? "交卷 →" : "下一题 →";
+  $("qFill").style.width = Math.round(qPos / qTotal * 100) + "%";
+}
+
+function pickOption(oi) {
+  qAns[qPos] = QUIZ[qDeck[qPos]].o[oi];
+  renderQuiz();
+}
+
+function quizPrev() {
+  if (qPos === 0) return;
+  qPos--; renderQuiz();
+}
+
+function quizNext() {
+  if (qPos < qTotal - 1) { qPos++; renderQuiz(); return; }
+  const un = qAns.filter(a => a === null).length;
+  if (un > 0 && !confirm("还有 " + un + " 题未作答，确定交卷？")) return;
+  submitQuiz(false);
+}
+
+function submitQuiz(auto) {
+  stopTimer();
+  let right = 0;
+  lastWrongQ = [];
+
+  qDeck.forEach((qi, i) => {
+    const q = QUIZ[qi];
+    if (qAns[i] === q.a) {
+      right++;
+      seenMap[q.cid] = true;
+      if (wrongMap[q.cid]) delete wrongMap[q.cid];   // 答对则移出错题本
+    } else {
+      lastWrongQ.push(qi);
+      wrongMap[q.cid] = (wrongMap[q.cid] || 0) + 1;  // 答错收入错题本
+    }
+  });
+  save();
+
+  const wrong = qTotal - right;
+  const used = Math.min(600, Math.round((Date.now() - qStartTs) / 1000));
+  const rate = Math.round(right / qTotal * 100);
+
+  $("qrEmoji").textContent = auto ? "⏰" : (rate >= 90 ? "🏆" : rate >= 70 ? "🎉" : rate >= 50 ? "💪" : "📖");
+  $("qrTitle").textContent = auto ? "时间到，已自动交卷" : "小测完成";
+  $("qrSub").textContent = "共 " + qTotal + " 题 · 用时 " + Math.floor(used / 60) + " 分 " + (used % 60) + " 秒" +
+    (wrong > 0 ? " · 错题已收入错题本" : "");
+  $("qrRight").textContent = right;
+  $("qrWrong").textContent = wrong;
+  $("qrScore").textContent = right + "/" + qTotal;
+
+  const retry = $("qrRetry");
+  if (wrong === 0) {
+    retry.disabled = true; retry.style.opacity = ".35";
+    retry.textContent = "全部答对 🎊";
+  } else {
+    retry.disabled = false; retry.style.opacity = "1";
+    retry.textContent = "🔁 重做这 " + wrong + " 道错题";
+  }
+
+  $("qrList").innerHTML = qDeck.map((qi, i) => {
+    const q = QUIZ[qi];
+    const mine = qAns[i];
+    const ok = (mine === q.a);
+    const qHtml = q.q.replace(/_{3,}/, "<b>" + q.a + "</b>");
+    let ansHtml;
+    if (!mine) {
+      ansHtml = '未作答　正确：<span class="right">' + q.a + "</span>";
+    } else {
+      ansHtml = "你的答案：<span class=\"" + (ok ? "right" : "wrong") + "\">" + mine + "</span>　正确：<span class=\"right\">" + q.a + "</span>";
+    }
+    return '<div class="rv-item' + (ok ? "" : " bad") + '">' +
+      '<div class="rv-head">第 ' + (i + 1) + ' 题 · ' + q.k + ' · ' + (ok ? "答对" : "答错") + '</div>' +
+      '<div class="rv-q">' + qHtml + '</div>' +
+      '<div class="rv-ans">' + ansHtml + '</div>' +
+      '<div class="rv-exp">解析：' + q.e + '</div>' +
+      '</div>';
+  }).join("");
+
+  $("backBtn").classList.remove("hidden");
+  $("topTitle").textContent = "小测结果";
+  show("quizResultView");
+  window.scrollTo(0, 0);
+}
+
+function retryWrongQuiz() {
+  if (!lastWrongQ.length) return;
+  beginQuiz(shuffle(lastWrongQ), "retry");
+}
+
+/* 顶栏返回统一分派 */
+function onBack() {
+  if (!$("quizView").classList.contains("hidden")) {
+    if (!confirm("退出本次小测？答题进度不会保存。")) return;
+    stopTimer(); goHome(); return;
+  }
+  if (!$("studyView").classList.contains("hidden")) { exitStudy(); return; }
+  goHome();
+}
+
+/* ========== 初始化 ========== */
+load();
+goHome();
+</script>
+</body>
+</html>
